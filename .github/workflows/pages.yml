@@ -1,0 +1,84 @@
+name: Build and deploy architecture
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: architecture-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    name: Render, validate and package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Import initial source package, if present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,io,json,tarfile,shutil
+          root=Path('.bootstrap')
+          if root.exists():
+              m=json.loads((root/'manifest.json').read_text())
+              packed=b''.join((root/p).read_bytes() for p in m['parts'])
+              assert hashlib.sha256(packed).hexdigest()==m['sha256'], 'Import checksum mismatch'
+              with tarfile.open(fileobj=io.BytesIO(packed),mode='r:xz') as archive:
+                  archive.extractall('.',filter='data')
+              Path('docs').mkdir(exist_ok=True)
+              Path('docs/import-manifest.json').write_text(json.dumps(m,indent=2)+'\n')
+              shutil.rmtree(root)
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned build dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Render all Mermaid diagrams
+        run: |
+          export PUPPETEER_EXECUTABLE_PATH="$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+          npm run render
+      - name: Build and validate the offline viewer
+        run: |
+          npm run build
+          npm test
+          npm run test:browser
+          npm run build
+      - name: Commit refreshed source and generated assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Build validated dark architecture assets [skip ci]'
+            git push origin HEAD:main
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+  deploy:
+    name: Publish GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

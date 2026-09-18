@@ -1,0 +1,5 @@
+{
+  "sha256": "9c0556bc23f7d0b9e4c7f4acbc6e467773250727dd046eb1f3ad2383b08e2359",
+  "parts": ["part-01.bin", "part-02.bin", "part-03.bin", "part-04.bin", "part-05.bin"],
+  "purpose": "One-time checksummed source import; expanded and removed by the first build."
+}

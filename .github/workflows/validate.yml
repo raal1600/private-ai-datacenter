@@ -1,0 +1,38 @@
+name: Validate architecture changes
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    name: Diagram and viewer regression checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build and test dependencies
+        run: |
+          npm ci --ignore-scripts
+          python -m pip install playwright==1.58.0
+          python -m playwright install --with-deps chromium
+      - name: Render, build and test
+        run: |
+          export PUPPETEER_EXECUTABLE_PATH="$(python -c 'from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print(p.chromium.executable_path); p.stop()')"
+          npm run render
+          npm run build
+          npm test
+          npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: architecture-validation
+          path: docs/validation-*.json

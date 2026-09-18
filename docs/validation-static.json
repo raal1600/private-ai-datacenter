@@ -1,0 +1,390 @@
+{
+  "checks": 96,
+  "passed": 96,
+  "results": [
+    {
+      "name": "18 ordered views",
+      "passed": true
+    },
+    {
+      "name": "No external runtime script",
+      "passed": true
+    },
+    {
+      "name": "CSP denies connections",
+      "passed": true
+    },
+    {
+      "name": "Dark color scheme",
+      "passed": true
+    },
+    {
+      "name": "Mobile menu and skip link",
+      "passed": true
+    },
+    {
+      "name": "Identical entrypoints",
+      "passed": true
+    },
+    {
+      "name": "01: source matches",
+      "passed": true
+    },
+    {
+      "name": "01: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "01: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "01: references resolve",
+      "passed": true
+    },
+    {
+      "name": "01: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "02: source matches",
+      "passed": true
+    },
+    {
+      "name": "02: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "02: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "02: references resolve",
+      "passed": true
+    },
+    {
+      "name": "02: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "03: source matches",
+      "passed": true
+    },
+    {
+      "name": "03: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "03: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "03: references resolve",
+      "passed": true
+    },
+    {
+      "name": "03: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "04: source matches",
+      "passed": true
+    },
+    {
+      "name": "04: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "04: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "04: references resolve",
+      "passed": true
+    },
+    {
+      "name": "04: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "05: source matches",
+      "passed": true
+    },
+    {
+      "name": "05: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "05: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "05: references resolve",
+      "passed": true
+    },
+    {
+      "name": "05: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "06: source matches",
+      "passed": true
+    },
+    {
+      "name": "06: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "06: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "06: references resolve",
+      "passed": true
+    },
+    {
+      "name": "06: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "07: source matches",
+      "passed": true
+    },
+    {
+      "name": "07: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "07: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "07: references resolve",
+      "passed": true
+    },
+    {
+      "name": "07: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "08: source matches",
+      "passed": true
+    },
+    {
+      "name": "08: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "08: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "08: references resolve",
+      "passed": true
+    },
+    {
+      "name": "08: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "09: source matches",
+      "passed": true
+    },
+    {
+      "name": "09: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "09: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "09: references resolve",
+      "passed": true
+    },
+    {
+      "name": "09: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "10: source matches",
+      "passed": true
+    },
+    {
+      "name": "10: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "10: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "10: references resolve",
+      "passed": true
+    },
+    {
+      "name": "10: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "11: source matches",
+      "passed": true
+    },
+    {
+      "name": "11: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "11: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "11: references resolve",
+      "passed": true
+    },
+    {
+      "name": "11: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "12: source matches",
+      "passed": true
+    },
+    {
+      "name": "12: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "12: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "12: references resolve",
+      "passed": true
+    },
+    {
+      "name": "12: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "13: source matches",
+      "passed": true
+    },
+    {
+      "name": "13: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "13: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "13: references resolve",
+      "passed": true
+    },
+    {
+      "name": "13: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "14: source matches",
+      "passed": true
+    },
+    {
+      "name": "14: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "14: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "14: references resolve",
+      "passed": true
+    },
+    {
+      "name": "14: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "15: source matches",
+      "passed": true
+    },
+    {
+      "name": "15: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "15: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "15: references resolve",
+      "passed": true
+    },
+    {
+      "name": "15: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "16: source matches",
+      "passed": true
+    },
+    {
+      "name": "16: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "16: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "16: references resolve",
+      "passed": true
+    },
+    {
+      "name": "16: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "17: source matches",
+      "passed": true
+    },
+    {
+      "name": "17: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "17: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "17: references resolve",
+      "passed": true
+    },
+    {
+      "name": "17: related views resolve",
+      "passed": true
+    },
+    {
+      "name": "18: source matches",
+      "passed": true
+    },
+    {
+      "name": "18: valid SVG XML",
+      "passed": true
+    },
+    {
+      "name": "18: dark Mermaid",
+      "passed": true
+    },
+    {
+      "name": "18: references resolve",
+      "passed": true
+    },
+    {
+      "name": "18: related views resolve",
+      "passed": true
+    }
+  ]
+}

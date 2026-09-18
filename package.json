@@ -1,0 +1,19 @@
+{
+  "name": "private-ai-datacenter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-first dark Mermaid architecture explorer",
+  "scripts": {
+    "render": "node scripts/render.mjs",
+    "build": "python3 scripts/build.py",
+    "test": "python3 tests/validate.py",
+    "test:browser": "python3 tests/browser.py",
+    "serve": "python3 -m http.server 8080 --bind 127.0.0.1"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "11.16.0"
+  },
+  "overrides": {
+    "mermaid": "11.16.1"
+  }
+}

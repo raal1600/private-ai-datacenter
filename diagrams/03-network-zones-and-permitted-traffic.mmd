@@ -1,0 +1,56 @@
+---
+config:
+  theme: dark
+---
+flowchart LR
+    INTERNET["Internet / tenant clients"]:::human
+    ADMIN["Privileged admin workstation<br/>Private VPN + MFA"]:::human
+    subgraph DMZ["VLAN 10 — DMZ / example 10.60.10.0/24"]
+      FW["HA edge firewall"]:::control
+      INGRESS["WAF / reverse proxy<br/>Published application listeners"]:::infrastructure
+    end
+    subgraph MG["VLAN 20 — management / 10.60.20.0/24"]
+      JUMP["Privileged access bastion<br/>Session recording"]:::control
+      VCTR["vCenter + infrastructure APIs<br/>HTTPS 443"]:::infrastructure
+      CORE["IAM / DNS / NTP / PKI<br/>Least-privilege service access"]:::infrastructure
+    end
+    subgraph AUTOM["VLAN 30 — automation / 10.60.30.0/24"]
+      AGENT["Agent workers<br/>No mutation credentials"]:::ai
+      EXEC["Execution gateway<br/>HTTPS mTLS 443"]:::control
+      VAULT["Secrets service<br/>Authorized executor identities only"]:::control
+    end
+    subgraph INFER["VLAN 40 — AI serving / 10.60.40.0/24"]
+      LLM["Model gateway<br/>HTTPS mTLS 443"]:::ai
+      WORKER["GPU worker backends<br/>Private allowlisted service ports"]:::ai
+    end
+    subgraph TEN["Isolated tenant networks"]
+      TA["Tenant A web / app / database<br/>Per-tier east-west rules"]:::infrastructure
+      TB["Tenant B web / app / database<br/>No A-to-B routing by default"]:::infrastructure
+    end
+    subgraph IO["Dedicated non-client fabrics"]
+      STORAGE["Storage and migration networks<br/>ESXi / storage nodes only"]:::store
+      RDMA["GPU collective network<br/>Example 200/400 Gb/s RDMA<br/>No tenants or internet routes"]:::ai
+      BACKUP["VLAN 50 — backup zone<br/>Proxy-to-repository rules only"]:::store
+      OOB["VLAN 90 — out-of-band<br/>BMCs and recovery broker"]:::control
+    end
+    INTERNET -->|HTTPS 443 only| FW --> INGRESS
+    INGRESS -->|approved application ports| TA & TB
+    ADMIN --> JUMP
+    JUMP -->|HTTPS 443| VCTR
+    JUMP -->|approved recovery session| OOB
+    AGENT -->|read / propose only| EXEC
+    AGENT -->|inference HTTPS 443| LLM --> WORKER
+    EXEC -->|approved API operation 443| VCTR
+    EXEC -->|scoped secret lease| VAULT
+    EXEC -->|controlled guest SSH 22 or WinRM 5986| TA & TB
+    VCTR -.->|management dependency| CORE
+    WORKER ---|collectives; not ordinary API traffic| RDMA
+    TA & TB -->|backup agents or proxies| BACKUP
+    VCTR -.->|separate ESXi vmkernel traffic| STORAGE
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

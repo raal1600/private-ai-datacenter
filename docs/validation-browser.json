@@ -1,0 +1,328 @@
+{
+  "checks": 80,
+  "passed": 80,
+  "javascript_errors": [],
+  "network_requests": [],
+  "results": [
+    {
+      "name": "18 navigation items",
+      "passed": true
+    },
+    {
+      "name": "Dark background",
+      "passed": true
+    },
+    {
+      "name": "01: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "01: design notes",
+      "passed": true
+    },
+    {
+      "name": "01: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "02: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "02: design notes",
+      "passed": true
+    },
+    {
+      "name": "02: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "03: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "03: design notes",
+      "passed": true
+    },
+    {
+      "name": "03: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "04: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "04: design notes",
+      "passed": true
+    },
+    {
+      "name": "04: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "05: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "05: design notes",
+      "passed": true
+    },
+    {
+      "name": "05: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "06: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "06: design notes",
+      "passed": true
+    },
+    {
+      "name": "06: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "07: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "07: design notes",
+      "passed": true
+    },
+    {
+      "name": "07: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "08: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "08: design notes",
+      "passed": true
+    },
+    {
+      "name": "08: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "09: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "09: design notes",
+      "passed": true
+    },
+    {
+      "name": "09: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "10: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "10: design notes",
+      "passed": true
+    },
+    {
+      "name": "10: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "11: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "11: design notes",
+      "passed": true
+    },
+    {
+      "name": "11: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "12: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "12: design notes",
+      "passed": true
+    },
+    {
+      "name": "12: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "13: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "13: design notes",
+      "passed": true
+    },
+    {
+      "name": "13: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "14: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "14: design notes",
+      "passed": true
+    },
+    {
+      "name": "14: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "15: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "15: design notes",
+      "passed": true
+    },
+    {
+      "name": "15: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "16: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "16: design notes",
+      "passed": true
+    },
+    {
+      "name": "16: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "17: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "17: design notes",
+      "passed": true
+    },
+    {
+      "name": "17: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "18: SVG visible",
+      "passed": true
+    },
+    {
+      "name": "18: design notes",
+      "passed": true
+    },
+    {
+      "name": "18: Mermaid source",
+      "passed": true
+    },
+    {
+      "name": "Read size",
+      "passed": true
+    },
+    {
+      "name": "Zoom in",
+      "passed": true
+    },
+    {
+      "name": "Zoom out",
+      "passed": true
+    },
+    {
+      "name": "Fit",
+      "passed": true
+    },
+    {
+      "name": "Mermaid download",
+      "passed": true
+    },
+    {
+      "name": "SVG download",
+      "passed": true
+    },
+    {
+      "name": "Empty search",
+      "passed": true
+    },
+    {
+      "name": "Search matches",
+      "passed": true
+    },
+    {
+      "name": "Hardware section",
+      "passed": true
+    },
+    {
+      "name": "Weights calculation",
+      "passed": true
+    },
+    {
+      "name": "Invalid input clears results",
+      "passed": true
+    },
+    {
+      "name": "Calculator recovers",
+      "passed": true
+    },
+    {
+      "name": "Automation catalog",
+      "passed": true
+    },
+    {
+      "name": "Sources section",
+      "passed": true
+    },
+    {
+      "name": "Desktop no page overflow",
+      "passed": true
+    },
+    {
+      "name": "Mobile menu visible",
+      "passed": true
+    },
+    {
+      "name": "Mobile sidebar collapsed",
+      "passed": true
+    },
+    {
+      "name": "Mobile menu opens",
+      "passed": true
+    },
+    {
+      "name": "Search focus",
+      "passed": true
+    },
+    {
+      "name": "Escape closes menu",
+      "passed": true
+    },
+    {
+      "name": "View selection closes menu",
+      "passed": true
+    },
+    {
+      "name": "Mobile no page overflow",
+      "passed": true
+    },
+    {
+      "name": "No JavaScript errors",
+      "passed": true
+    },
+    {
+      "name": "No runtime network requests",
+      "passed": true
+    }
+  ]
+}

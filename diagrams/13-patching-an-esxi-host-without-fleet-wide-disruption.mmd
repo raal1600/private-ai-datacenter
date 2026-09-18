@@ -1,0 +1,41 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    START["Approved patch campaign<br/>Pinned vendor image and target list"]:::control
+    COMPAT["Compatibility checks<br/>Hardware / firmware / drivers / release matrix"]:::control
+    AUTH["Signed maintenance authorization<br/>Exact image + host + change window"]:::human
+    LOCK["Acquire host and cluster lease<br/>Fence conflicting workflow writers"]:::control
+    PRE["Read live preconditions<br/>Cluster healthy / free capacity / backups<br/>No conflicting storage resync"]:::infrastructure
+    OK{"Admission and<br/>safety checks pass?"}:::control
+    HOLD["Hold campaign and alert owner<br/>No automatic capacity guess"]:::stop
+    EVAC["Evacuate or shut down approved guests<br/>Respect affinity and migration compatibility"]:::infrastructure
+    EMPTY{"Host drained and<br/>remaining services healthy?"}:::control
+    MODE["Enter maintenance mode<br/>Confirm via VMware task status"]:::infrastructure
+    PATCH["Apply tested patch image<br/>Reboot if required"]:::infrastructure
+    POST["Verify host rejoin<br/>Networking / storage / time / agents"]:::control
+    HEALTH{"Host and service<br/>checks pass?"}:::control
+    RETURN["Exit maintenance; gradual workload return<br/>Observe health before next target"]:::infrastructure
+    EVIDENCE["Commit evidence and new baseline<br/>Release lease"]:::store
+    NEXT{"More approved hosts<br/>within same window?"}:::control
+    DONE["Campaign complete<br/>Report verified results"]:::store
+    RECOVER["Keep failed host isolated<br/>Execute approved recovery procedure<br/>or escalate for reinstall / vendor support"]:::stop
+    ONCALL["Human on-call and hardware technician<br/>Independent console or BMC access"]:::human
+    START --> COMPAT --> AUTH --> LOCK --> PRE --> OK
+    OK -->|no| HOLD
+    OK -->|yes| EVAC --> EMPTY
+    EMPTY -->|no| HOLD
+    EMPTY -->|yes| MODE --> PATCH --> POST --> HEALTH
+    HEALTH -->|yes| RETURN --> EVIDENCE --> NEXT
+    NEXT -->|yes; recheck all preconditions| LOCK
+    NEXT -->|no| DONE
+    HEALTH -->|no| RECOVER --> ONCALL
+    HOLD --> HALTED["Campaign paused<br/>Persist evidence; release safe leases"]:::store
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

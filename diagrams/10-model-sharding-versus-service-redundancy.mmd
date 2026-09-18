@@ -1,0 +1,42 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    REQUEST["Authenticated local inference request"]:::control
+    ROUTER["Health-aware routing + admission limits"]:::ai
+    subgraph FIT["OPTION A — model fits within one multi-GPU node"]
+      A["Replica A: complete model<br/>GPU 0..7 in one OEM server"]:::ai
+      B["Replica B: complete model<br/>GPU 0..7 in a second server"]:::ai
+    end
+    subgraph LARGE["OPTION B — one model requires multiple nodes"]
+      subgraph G1["Replica group 1 — one complete logical model"]
+        A1["Node A1<br/>Model shard group 1"]:::ai
+        A2["Node A2<br/>Model shard group 2"]:::ai
+        F1["Dedicated collective fabric<br/>TP / PP / EP as runtime supports"]:::infrastructure
+        A1 <--> F1 <--> A2
+      end
+      subgraph G2["Complete replica group 2"]
+        B1["Node B1<br/>Model shard group 1"]:::ai
+        B2["Node B2<br/>Model shard group 2"]:::ai
+        F2["Independent or resilient collective paths<br/>Avoid shared single points of failure"]:::infrastructure
+        B1 <--> F2 <--> B2
+      end
+    end
+    SMALL["Optional smaller local fallback<br/>Only for separately validated tasks"]:::ai
+    FAILURE["A shard failure removes its replica<br/>Remaining shards are not a full model"]:::stop
+    SLO["Measure after a full replica loss<br/>Capacity reserve and latency target"]:::control
+    REQUEST --> ROUTER
+    ROUTER -->|choose A or B topology; not both by default| A & B
+    ROUTER -->|when multi-node is required| A1 & B1
+    ROUTER -->|explicit degraded capability| SMALL
+    A2 -.->|failure scenario| FAILURE
+    FAILURE -->|route elsewhere; requeue safely| ROUTER
+    B & B1 --> SLO
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

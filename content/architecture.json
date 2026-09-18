@@ -1,0 +1,693 @@
+{
+  "date": "2026-09-18",
+  "diagrams": [
+    {
+      "id": "01",
+      "title": "Estate boundaries and service ownership",
+      "group": "Foundation",
+      "question": "Where does customer traffic go, and where is the AI allowed to act?",
+      "summary": "Three separate planes: tenant services carry customer traffic, management services run the estate, and AI inference supplies reasoning. The AI is not inline in customer traffic.",
+      "notes": [
+        "This is a proposed deployment pattern, not an inventory discovered from your datacenter. Later views expand each boundary rather than putting every component here.",
+        "Customer data remains in the on-prem runtime, including prompts, tool results, embeddings, traces, workflow state and backups. Separate off-site recovery may use another customer-controlled location.",
+        "The application data plane must keep serving when the agent or GPU pool is unavailable. Existing HA, firewall enforcement, backup schedules and safety controllers do not depend on LLM decisions.",
+        "Local hosting is a design requirement, not proof of GDPR compliance. Legal basis, data minimization, retention, processor arrangements, security and any transfers still require assessment."
+      ],
+      "refs": [
+        "gdpr",
+        "vmware"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "02",
+        "03",
+        "04"
+      ],
+      "file": "01-estate-boundaries-and-service-ownership.mmd"
+    },
+    {
+      "id": "02",
+      "title": "Physical hardware, power and recovery access",
+      "group": "Foundation",
+      "question": "What equipment exists physically, and how do we recover when the ordinary network fails?",
+      "summary": "Production uses separate management CPU nodes, VMware compute, storage and inference hardware. The operator PC is a client, never the always-on management server.",
+      "notes": [
+        "Counts illustrate topology, not a purchase order. Three voting management members only tolerate a failure if their placement, storage and quorum configuration support it. Three nodes in one rack do not create rack-level resilience.",
+        "Dual power supplies must connect to genuinely separate supported power paths. Cooling, utility supply and fire suppression need facilities engineering; software agents do not replace their safety controls.",
+        "Use dedicated GPU servers initially rather than making inference depend on the VMware cluster being repaired. GPU virtualization is a separate compatibility and licensing decision.",
+        "Storage shown here is a shared array design. A vSAN design is an alternative with its own controller, disk, network, fault-domain and licensing assessment; do not buy both just because both appear in product brochures.",
+        "AI can diagnose hardware and prepare work orders. Physical replacement, access control, electrical work and emergency decisions remain authorized human responsibilities."
+      ],
+      "refs": [
+        "redfish"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "01",
+        "03",
+        "04"
+      ],
+      "file": "02-physical-hardware-power-and-recovery-access.mmd"
+    },
+    {
+      "id": "03",
+      "title": "Network zones and permitted traffic",
+      "group": "Foundation",
+      "question": "Which networks can communicate, over which protocols, and what is denied?",
+      "summary": "VLAN and subnet numbers are examples. Inter-zone policy is deny-by-default, and inference workers have no route to infrastructure administration or the public internet.",
+      "notes": [
+        "Logical rules are not a complete vendor firewall export. Populate the exact VMware, backup, storage, identity, DNS/NTP and inference port matrix for the installed versions before implementation.",
+        "Keep storage I/O, vMotion, GPU collectives, tenant application traffic and BMC recovery traffic separate. A VLAN label alone is not authorization or tenant isolation.",
+        "Only the execution gateway may reach mutation APIs. Host SSH is an exception for approved runbooks, not the agent's default root access. Human RDP should be brokered and scoped, never publicly exposed.",
+        "RDMA and distributed-worker transports may not provide application-level encryption. Isolate the fabric and validate supported link encryption and threat controls; do not label every collective connection as TLS.",
+        "Outbound internet from production inference, retrieval and execution workers is denied. Downloads occur through the separate import-and-promotion workflow in view 16."
+      ],
+      "refs": [
+        "vmware",
+        "parallel"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "01",
+        "02",
+        "04"
+      ],
+      "file": "03-network-zones-and-permitted-traffic.mmd"
+    },
+    {
+      "id": "04",
+      "title": "VMware platform and tenant isolation",
+      "group": "Foundation",
+      "question": "How do physical servers become isolated deployment environments?",
+      "summary": "vCenter controls lifecycle; ESXi runs workloads. The agent requests scoped VMware API operations through the broker rather than using an administrator desktop session.",
+      "notes": [
+        "A VMware folder or resource pool is an administrative boundary, not sufficient network isolation. Combine roles, segments, firewall rules, storage permissions and tenant-specific service identities.",
+        "Optional NSX functionality is not assumed included in an unspecified VMware installation. Confirm exact platform version, entitlement and integration API before purchase.",
+        "Select CPU and memory reservations and HA admission rules from measured workloads. Four hosts do not by themselves guarantee resilience to a whole-rack loss.",
+        "Infrastructure state is confirmed from authoritative APIs after each task. A successful tool response or a generated statement is not proof that a VM is healthy.",
+        "DNS names identify services; they are not the tenant boundary. Public and private DNS changes are independent steps with their own authorization."
+      ],
+      "refs": [
+        "vmware"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "01",
+        "02",
+        "03"
+      ],
+      "file": "04-vmware-platform-and-tenant-isolation.mmd"
+    },
+    {
+      "id": "05",
+      "title": "Local AI control plane and durable state",
+      "group": "AI platform",
+      "question": "What actually runs continuously, beyond the language model?",
+      "summary": "A local model is one service in a controlled operations platform. Event intake, workflow persistence, reconciliation, policies and verification run on CPU services.",
+      "notes": [
+        "Agent roles are logical capabilities, not necessarily eight separate always-running models. A worker pool can share approved model endpoints while maintaining tenant and task isolation.",
+        "Temporal and OPA are implementation candidates, not a pre-integrated product. The durable engine runs deterministic workflow logic; LLM calls and side effects run as recorded activities.",
+        "Prefer at-least-once delivery with deduplication and idempotent actions. Exactly-once execution across vCenter, DNS, firewalls and backups should not be assumed.",
+        "Keep event history, lease state and approvals outside model memory. A restarted worker resumes from recorded state rather than improvising what happened.",
+        "Observability and safety monitoring continue without inference. An unhealthy AI service reduces automation; it must not disable ordinary monitoring or customer services."
+      ],
+      "refs": [
+        "temporal",
+        "opa"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "06",
+        "07",
+        "08"
+      ],
+      "file": "05-local-ai-control-plane-and-durable-state.mmd"
+    },
+    {
+      "id": "06",
+      "title": "Execution gateway, credentials and authority",
+      "group": "AI platform",
+      "question": "How is an AI proposal converted into a safe, auditable infrastructure change?",
+      "summary": "The authorization boundary is implemented in software outside the model. Every mutation is bound to an exact plan, tenant, target, workflow version and expiry.",
+      "notes": [
+        "The agent cannot approve its own proposal, read the vault, change the signed policy bundle or edit its execution tool allowlist. Approval is not a prompt instruction.",
+        "Bind approvals to action arguments and plan hash. Any changed target, volume, network rule or parameter invalidates approval and requires re-evaluation.",
+        "Credential leases are short-lived and scoped to the adapter. Broad shared vCenter Administrator or domain-admin credentials are excluded from the default design.",
+        "Destructive recovery, backup retention changes, identity-policy changes and physical power controls use stricter authority. Pre-approved incident containment can be narrow and time-limited.",
+        "MCP may expose the adapter interface, but MCP is not a security boundary by itself. Authentication, authorization, validation, logging and network controls remain mandatory.",
+        "Before mutation, persist the approved action and audit intent. If the audit destination fails after a side effect, retain a local durable receipt, stop further mutations and escalate."
+      ],
+      "refs": [
+        "opa",
+        "vmware",
+        "redfish",
+        "owasp"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "05",
+        "07",
+        "08"
+      ],
+      "file": "06-execution-gateway-credentials-and-authority.mmd"
+    },
+    {
+      "id": "07",
+      "title": "Knowledge ingestion and data ownership",
+      "group": "AI platform",
+      "question": "What is indexed locally, and how do source permissions and deletion propagate?",
+      "summary": "Documents feed retrieval; live metrics and infrastructure state stay in their authoritative stores. Indexing is permission-aware, versioned and reversible.",
+      "notes": [
+        "Assign tenant and ACL metadata before embedding. Retrieval must recheck authorization after candidates are selected and before any text is passed to the model.",
+        "Customer databases are not automatically ingested. Start with operational metadata and approved documentation; obtain explicit authorization and minimize fields for any customer-content use.",
+        "Logs and time series remain in log and metric stores. Query a bounded time range when needed; do not continuously embed every raw log line.",
+        "Embeddings, summaries, cached context, traces and indexed chunks can remain sensitive. Apply retention, encryption, access control and deletion handling to these derived datasets.",
+        "A document may describe a command but cannot grant permission to execute it. Treat retrieved text and tool output as possible prompt-injection input.",
+        "Deletion requires chunk lineage and reconciliation. Do not promise immediate deletion from immutable backups; follow documented retention, legal-hold rules and tombstone replay on restore."
+      ],
+      "refs": [
+        "gdpr",
+        "owasp"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "05",
+        "06",
+        "08"
+      ],
+      "file": "07-knowledge-ingestion-and-data-ownership.mmd"
+    },
+    {
+      "id": "08",
+      "title": "Tenant-safe retrieval and planning request",
+      "group": "AI platform",
+      "question": "What happens between an incident arriving and the model producing a plan?",
+      "summary": "Caller identity determines the tenant scope. The model cannot choose another tenant, read arbitrary logs or substitute stale documentation for current infrastructure state.",
+      "notes": [
+        "Tenant scope is server-derived from authenticated identity and workflow metadata, not accepted from a model-generated tenant_id field.",
+        "Combine exact identifiers, keyword retrieval and vector search. Reranking is local and only receives candidates the caller may read.",
+        "Preserve source versions and observation timestamps so a plan can cite its evidence. Expired permissions and stale inventory trigger revalidation.",
+        "The plan validator checks syntax and scope, not whether the model is magically correct. Independent policy, dry-run checks and outcome verification remain separate.",
+        "This sequence ends at a candidate plan. It does not grant execution permission; view 06 controls that transition."
+      ],
+      "refs": [
+        "owasp"
+      ],
+      "kind": "sequence",
+      "related": [
+        "05",
+        "06",
+        "07"
+      ],
+      "file": "08-tenant-safe-retrieval-and-planning-request.mmd"
+    },
+    {
+      "id": "09",
+      "title": "Inference hardware and local serving stack",
+      "group": "AI hardware",
+      "question": "Which hardware runs the models, which hardware runs the agent, and where does model memory live?",
+      "summary": "GPU memory stores resident weights, KV cache and runtime buffers. CPU hosts run the orchestration platform; local NVMe holds model artifacts and supported staging data.",
+      "notes": [
+        "The two desktop candidates both have 128 GB unified memory in the referenced specifications. That pool is shared with the system and is not 128 GB of exclusively available GPU HBM.",
+        "Use a desktop device for local prototyping or a measured small workload. Do not assume its capacity marketing claim meets a 24/7 production latency, concurrency or redundancy requirement.",
+        "A production AMD candidate is an OEM Instinct MI355X server: the GPU specification lists 288 GB HBM3E and 8 TB/s memory bandwidth. These are per-device specs, not guaranteed application throughput.",
+        "For NVIDIA production, evaluate an OEM multi-GPU datacenter server against the same checkpoint, precision, power and service target. Keep a replica homogeneous; do not assume mixed CUDA/ROCm devices form one supported tensor-parallel group.",
+        "Local NVMe is not a substitute for HBM capacity or a generic extension of KV cache. CPU/NVMe offload needs explicit runtime support and its own latency benchmark.",
+        "Specify Linux, firmware, driver, runtime, checkpoint digest, quantization kernel support and OEM service coverage as a tested matrix. A model fitting in memory is necessary but not sufficient."
+      ],
+      "refs": [
+        "spark",
+        "halo",
+        "mi355",
+        "parallel"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "10"
+      ],
+      "file": "09-inference-hardware-and-local-serving-stack.mmd"
+    },
+    {
+      "id": "10",
+      "title": "Model sharding versus service redundancy",
+      "group": "AI hardware",
+      "question": "Does buying more machines make one model fit, make it faster, or make it highly available?",
+      "summary": "Sharding divides one model across devices. A second independently complete serving group provides failover capacity. The two solve different problems.",
+      "notes": [
+        "TP = tensor parallelism, PP = pipeline parallelism and EP = expert parallelism. Supported combinations depend on the model architecture and serving runtime; the exact mapping is not selected by this diagram.",
+        "Four 128 GB desktops offer 512 GB nominal aggregate memory, not one automatically usable 512 GB accelerator. Networking, runtime support, communication overhead, system reserves and shard placement still matter.",
+        "For the historical R1-671B worked example, theoretical weight-only storage is 335.5 GB at 4 bits, 671 GB at 8 bits or 1,342 GB at 16 bits. Quantization metadata and inference memory are additional.",
+        "Two 128 GB devices cannot hold all R1-671B weights at theoretical 4-bit storage wholly in their combined 256 GB memory. More aggressive compression or offload changes the scenario and needs validation.",
+        "An eight-MI355X group has 2,304 GB nominal aggregate HBM by arithmetic. That is a capacity illustration, not proof of a particular checkpoint's supported kernels, usable memory, performance or failover.",
+        "Size replica count from measured normal and failure-mode demand. A small fallback has reduced capability unless separately proven; it is not full-model HA."
+      ],
+      "refs": [
+        "parallel",
+        "r1",
+        "spark",
+        "mi355"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "09"
+      ],
+      "file": "10-model-sharding-versus-service-redundancy.mmd"
+    },
+    {
+      "id": "11",
+      "title": "Tenant onboarding and application deployment",
+      "group": "Operations",
+      "question": "How does a customer request become a protected, reachable deployment?",
+      "summary": "A durable workflow allocates identity, network, compute, DNS and backup protection, verifies the service, and publishes the endpoint only after required controls pass.",
+      "notes": [
+        "This is a catalog workflow, not arbitrary generated infrastructure code. Versioned templates and approved parameter ranges make repetition predictable.",
+        "The transaction spans independent systems. Use a saga-style compensation record and reconcile observed state after timeouts rather than assuming an API call failed.",
+        "Provisioning credentials are not sent to the customer or model. User access is issued through the designated identity and secrets processes.",
+        "Publish DNS and external ingress only after the agreed readiness gates pass. Domain ownership and certificate validation are separate checked inputs.",
+        "Attach a backup policy and verify protection readiness during onboarding. Application-specific first-backup requirements depend on the service tier and should be explicit."
+      ],
+      "refs": [
+        "vmware",
+        "temporal"
+      ],
+      "kind": "sequence",
+      "related": [
+        "12",
+        "13",
+        "14",
+        "15"
+      ],
+      "file": "11-tenant-onboarding-and-application-deployment.mmd"
+    },
+    {
+      "id": "12",
+      "title": "Security incident triage and bounded containment",
+      "group": "Operations",
+      "question": "How does the agent respond at 03:00 without receiving unrestricted security authority?",
+      "summary": "Corroborate the alert, preserve evidence, authorize a specific containment action, then verify both containment and service impact. High-impact changes remain gated.",
+      "notes": [
+        "Example pre-approved actions could be quarantining one explicitly enrolled non-critical VM or revoking one confirmed compromised workload token. The actual allowlist must reflect business impact and tested dependencies.",
+        "Do not let one raw log entry trigger fleet-wide firewall changes. Use corroboration, target ownership and deterministic bounds; logs and tickets may contain attacker-controlled content.",
+        "Forensic evidence capture may itself contain customer data. Restrict access and retention; do not take unlimited disk or memory copies by default.",
+        "Containment is not automatic remediation or proof of compromise. Recovery, rejoining networks, secret rotation and customer communication may require separate approvals.",
+        "A human timeout is not consent. Existing deterministic protections remain active, while unapproved new actions are held and escalated."
+      ],
+      "refs": [
+        "owasp",
+        "opa"
+      ],
+      "kind": "sequence",
+      "related": [
+        "11",
+        "13",
+        "14",
+        "15"
+      ],
+      "file": "12-security-incident-triage-and-bounded-containment.mmd"
+    },
+    {
+      "id": "13",
+      "title": "Patching an ESXi host without fleet-wide disruption",
+      "group": "Operations",
+      "question": "How is a high-risk maintenance workflow constrained and verified?",
+      "summary": "Maintenance proceeds one approved failure domain at a time. Admission checks, evacuation, post-checks and a tested recovery path are prerequisites, not optional AI suggestions.",
+      "notes": [
+        "The detailed adapter must use the patching and lifecycle APIs supported by the exact VMware release. This is a workflow specification, not an unverified list of universal API calls.",
+        "Migration depends on CPU, storage, networking, application and licensing constraints. Incompatible or pinned workloads need an approved downtime or alternate-host procedure.",
+        "One host at a time is an initial policy example. The safe parallelism is derived from actual failure domains, workload reservations, storage state and recovery capacity.",
+        "Firmware and hypervisor rollback are not always supported. Require a tested recovery path such as a previous supported boot image, reinstall or host replacement; do not promise a snapshot rollback.",
+        "The agent may prepare the plan and evidence. It does not invent a patch binary, bypass a change window or decide that failed admission checks can be ignored."
+      ],
+      "refs": [
+        "vmware"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "11",
+        "12",
+        "14",
+        "15"
+      ],
+      "file": "13-patching-an-esxi-host-without-fleet-wide-disruption.mmd"
+    },
+    {
+      "id": "14",
+      "title": "Backups, restore verification and disaster recovery",
+      "group": "Operations",
+      "question": "How do we prove recoverability, including when the management platform is lost?",
+      "summary": "Protection, restore testing and disaster failover are separate workflows. The AI cannot delete protected recovery points or become the only way to recover itself.",
+      "notes": [
+        "RPO is acceptable data loss and RTO is acceptable restoration time. Define targets per service, then measure recovery; no target is guaranteed by this topology.",
+        "Backups include agent and management state, but the recovery bootstrap must not require a working agent, GPU service, primary vCenter or its identity database.",
+        "Immutable storage protects recovery points only when credentials, retention controls and physical or administrative separation are also designed correctly.",
+        "Store deprovisioning tombstones separately and reapply them before recovered data becomes accessible. Retention and legal holds must govern backup expiry.",
+        "Failover requires fencing the old primary or otherwise proving it cannot accept writes. DNS changes alone do not prevent split-brain databases.",
+        "Recovery tests must validate applications, not merely that virtual disks could be copied or a VM could be powered on."
+      ],
+      "refs": [
+        "gdpr"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "11",
+        "12",
+        "13",
+        "15"
+      ],
+      "file": "14-backups-restore-verification-and-disaster-recovery.mmd"
+    },
+    {
+      "id": "15",
+      "title": "Workflow execution lifecycle and failure semantics",
+      "group": "Operations",
+      "question": "What prevents retries, crashes or stale approvals from creating unintended side effects?",
+      "summary": "Every action is a durable state transition. Side effects are idempotent where possible, otherwise reconciled against authoritative operation IDs and observed state.",
+      "notes": [
+        "The model does not own the state machine. A durable engine executes it; model calls supply candidate plans and explanations through recorded activities.",
+        "Assume at-least-once delivery. A timeout may mean an operation succeeded but its response was lost; reconcile before repeating resource creation, deletion or power actions.",
+        "Prevent simultaneous writers with target-scoped leases and, where supported, fencing tokens. Cross-system changes must also revalidate state before each mutation.",
+        "Approval expires on plan changes, target changes or elapsed time. Retrying a workflow is not permission to broaden its scope.",
+        "Compensation is not a guaranteed undo. Some security, firmware, data deletion and external side effects require human recovery or a separately authorized restore.",
+        "The audit path must preserve approved intent before mutation and durable receipts after it. Stop subsequent side effects when durable evidence cannot be maintained."
+      ],
+      "refs": [
+        "temporal",
+        "opa"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "11",
+        "12",
+        "13",
+        "14"
+      ],
+      "file": "15-workflow-execution-lifecycle-and-failure-semantics.mmd"
+    },
+    {
+      "id": "16",
+      "title": "Model, workflow and policy supply chain",
+      "group": "Governance and recovery",
+      "question": "How do updates enter a private environment without allowing the agent to rewrite its own guardrails?",
+      "summary": "Imports, testing, approval and deployment use separate identities. Models and runbooks are versioned artifacts; retrieved documents never become executable tools automatically.",
+      "notes": [
+        "No external LLM fallback, remote embedding service, hosted vector store or cloud trace export is enabled in the production runtime. Approved software imports are a separate controlled path.",
+        "Local operation must be tested under denied internet egress. Some packages, entitlement checks, model loaders or telemetry defaults may otherwise introduce external dependencies.",
+        "Evaluation must include real tool adapters in a disposable representative environment, not only language-model benchmarks or mocked unit tests.",
+        "Injection tests must cover malicious tickets, runbooks, filenames and tool output. Verify that policy and credentials remain inaccessible even when the model follows malicious text.",
+        "Model updates, executable workflows, security policy and credentials require different approval roles. An agent cannot promote its own tool or permission changes.",
+        "Never continuously fine-tune on unreviewed production interactions. Curate authorized datasets, retention and provenance before any training or evaluation reuse."
+      ],
+      "refs": [
+        "owasp"
+      ],
+      "kind": "flowchart",
+      "related": [
+        "17",
+        "18"
+      ],
+      "file": "16-model-workflow-and-policy-supply-chain.mmd"
+    },
+    {
+      "id": "17",
+      "title": "AI outages, degraded operation and break-glass",
+      "group": "Governance and recovery",
+      "question": "Who is in control when inference, policy, state storage or vCenter is unavailable?",
+      "summary": "Failures narrow automation rather than widen privileges. Recovery has independent credentials, network access and runbooks that do not depend on the failed system.",
+      "notes": [
+        "Fail-closed means no new unauthorized mutations; it does not mean powering off customer workloads when a policy service or model fails.",
+        "In-flight side effects must be reconciled. Revoking a token or pressing a kill switch does not automatically undo an API operation already accepted by the target.",
+        "Break-glass access is separately governed, logged where possible and reviewed afterward. Store recovery keys so a failed identity service cannot lock out all recovery.",
+        "Native infrastructure HA has independent dependencies and limits. This design avoids making it dependent on AI; it does not claim that every outage leaves all workloads available.",
+        "The management CPU cluster, state storage, local DNS/NTP, identity and recovery tooling need explicit bootstrap and recovery tests.",
+        "A smaller fallback model may handle approved low-risk tasks only. Do not silently give it the full model's authority or claim identical performance."
+      ],
+      "refs": [],
+      "kind": "flowchart",
+      "related": [
+        "16",
+        "18"
+      ],
+      "file": "17-ai-outages-degraded-operation-and-break-glass.mmd"
+    },
+    {
+      "id": "18",
+      "title": "Tenant offboarding, retention and verified deletion",
+      "group": "Governance and recovery",
+      "question": "How do we remove a customer environment without losing evidence or retaining unnoticed AI-derived copies?",
+      "summary": "Offboarding revokes access, coordinates export and retention obligations, removes approved active data and derived AI artifacts, and records a verified lifecycle outcome.",
+      "notes": [
+        "Require explicit authorization for destructive actions, legal holds and customer-data export. The AI cannot decide legal retention requirements by itself.",
+        "An active deletion request does not override a lawful hold or immutable backup retention. Record exceptions and enforce deletion after the applicable period.",
+        "Derived datasets include embeddings, chunk stores, prompts, summaries, caches, traces and test corpora. A VM delete is not a complete customer-data lifecycle operation.",
+        "Replay deletion tombstones before making restored backups accessible. Verify that disabled identities cannot regain access after recovery.",
+        "Storage disposal or secure erasure must follow the media, encryption and supplier process selected for the estate; do not equate deleting a filename with physical sanitization."
+      ],
+      "refs": [
+        "gdpr"
+      ],
+      "kind": "sequence",
+      "related": [
+        "16",
+        "17"
+      ],
+      "file": "18-tenant-offboarding-retention-and-verified-deletion.mmd"
+    }
+  ],
+  "sources": {
+    "spark": {
+      "title": "NVIDIA DGX Spark — hardware specifications",
+      "url": "https://docs.nvidia.com/dgx/dgx-spark/hardware.html",
+      "supports": "128 GB unified memory, 273 GB/s memory bandwidth, ARM CPU, desktop form factor; advertised 200B/405B model limits are not service-level guarantees."
+    },
+    "halo": {
+      "title": "AMD Ryzen AI Halo — official platform page",
+      "url": "https://www.amd.com/en/products/processors/desktops/ryzen/ryzen-ai-halo.html",
+      "supports": "Desktop local-AI platform with 128 GB unified memory. Evaluate exact OEM, software and model configuration."
+    },
+    "mi355": {
+      "title": "AMD Instinct MI355X — official specifications",
+      "url": "https://www.amd.com/en/products/accelerators/instinct/mi350/mi355x.html",
+      "supports": "288 GB HBM3E, 8 TB/s memory bandwidth and 1,400 W typical board power per accelerator; OEM system limits are additional."
+    },
+    "r1": {
+      "title": "DeepSeek-R1 — official repository and model table",
+      "url": "https://github.com/deepseek-ai/DeepSeek-R1",
+      "supports": "Historical full R1 model: 671B total parameters and 37B activated per token. This is the named sizing example, not a claim that it is the latest DeepSeek."
+    },
+    "deepseek_current": {
+      "title": "DeepSeek-V4.1-Flash — official model card",
+      "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash",
+      "supports": "A newer DeepSeek checkpoint exists with a different architecture and conditional-memory components. Do not reuse the R1 memory calculation as its BOM."
+    },
+    "parallel": {
+      "title": "vLLM — parallelism and scaling",
+      "url": "https://docs.vllm.ai/en/latest/serving/parallelism_scaling/",
+      "supports": "Single-node and multi-node serving, TP/PP/EP considerations, memory/concurrency sizing and isolation of distributed-worker networks."
+    },
+    "vmware": {
+      "title": "Broadcom — vSphere Automation API",
+      "url": "https://developer.broadcom.com/xapis/vsphere-automation-api/latest/",
+      "supports": "VMware lifecycle and management API surface. Validate operations, ports, roles and entitlements against the installed version."
+    },
+    "temporal": {
+      "title": "Temporal — workflow documentation",
+      "url": "https://docs.temporal.io/workflows",
+      "supports": "Candidate durable workflow implementation; deterministic orchestration is separated from activities and external side effects."
+    },
+    "opa": {
+      "title": "Open Policy Agent — official documentation",
+      "url": "https://www.openpolicyagent.org/docs",
+      "supports": "Candidate external policy decision service, independent of model-generated instructions."
+    },
+    "redfish": {
+      "title": "DMTF — Redfish standard",
+      "url": "https://www.dmtf.org/standards/redfish",
+      "supports": "Standards-based hardware management; actual operations depend on the OEM BMC implementation."
+    },
+    "owasp": {
+      "title": "OWASP — LLM prompt injection risk",
+      "url": "https://genai.owasp.org/llmrisk/llm01-prompt-injection/",
+      "supports": "Untrusted external or retrieved content can redirect model behavior; apply privilege separation and layered controls."
+    },
+    "gdpr": {
+      "title": "EUR-Lex — General Data Protection Regulation",
+      "url": "https://eur-lex.europa.eu/eli/reg/2016/679/oj/eng",
+      "supports": "Local hosting does not itself establish compliance. Assess lawful processing, minimization, retention, security, roles and transfers with appropriate legal support."
+    }
+  },
+  "assumptions": [
+    [
+      "Reference, not an as-built audit",
+      "No private datacenter inventory was inspected. Device names, subnet ranges, initial counts and workflow policies are proposed. This package does not deploy or administer anything."
+    ],
+    [
+      "Local runtime and data boundary",
+      "Inference, embeddings, retrieval stores, agent state, secrets, logs and evaluation data remain in controlled infrastructure. Software imports are quarantined and approved. No external inference fallback is proposed."
+    ],
+    [
+      "Management independence",
+      "Run the recovery-critical workflow, identity, policy, state and monitoring services on dedicated CPU infrastructure, not exclusively on the workload cluster they must repair."
+    ],
+    [
+      "Automation, not unbounded root access",
+      "The AI proposes typed actions. Deterministic policy, short-lived capabilities, target locks, independent verification and human approvals control side effects."
+    ],
+    [
+      "Humans retain exceptional authority",
+      "Physical repairs, electrical safety, legal decisions, catastrophic recovery, sensitive access changes and unbounded destructive operations remain explicitly assigned to authorized people."
+    ],
+    [
+      "No automatic GDPR conclusion",
+      "On-premises hosting can support your data-control requirement. It is neither universally mandated by GDPR nor sufficient for compliance. Obtain appropriate assessment of lawful processing, retention, roles, safeguards and transfers."
+    ],
+    [
+      "No fixed hardware bill yet",
+      "The selected checkpoint, exact weight representation, runtime, concurrency, context length, latency target, fault tolerance, power envelope and budget are unresolved procurement inputs."
+    ],
+    [
+      "Availability is measured, not inferred",
+      "An extra shard is not an extra replica. A second power cable is not a second utility. Quorum, storage, identity, network and recovery dependencies must be tested under real failure scenarios."
+    ]
+  ],
+  "hardware": [
+    {
+      "name": "NVIDIA DGX Spark",
+      "tier": "Development / measured pilot",
+      "memory": "128 GB unified system memory",
+      "fit": "Prototype on a CUDA-oriented local stack. Test your own agent workflows and model-serving configuration.",
+      "caution": "System and GPU share this memory. Advertised parameter capacity is not a latency, concurrency or HA guarantee.",
+      "ref": "spark"
+    },
+    {
+      "name": "AMD Ryzen AI Halo",
+      "tier": "Development / measured pilot",
+      "memory": "128 GB unified memory",
+      "fit": "Compare an AMD local-development stack using the same tasks and quantization, with verified driver and runtime support.",
+      "caution": "It is a desktop platform, not an Instinct rack server. Check the precise OEM configuration and supported model runtime.",
+      "ref": "halo"
+    },
+    {
+      "name": "OEM AMD Instinct MI355X server",
+      "tier": "Full-model production candidate",
+      "memory": "288 GB HBM3E per accelerator",
+      "fit": "Evaluate a supported multi-GPU server against the chosen full checkpoint. An 8-GPU group has 2,304 GB nominal aggregate HBM.",
+      "caution": "1,400 W board power per GPU implies 11.2 kW for eight boards alone. Host, networking and cooling are additional. Confirm OEM facilities and runtime requirements.",
+      "ref": "mi355"
+    },
+    {
+      "name": "OEM NVIDIA datacenter GPU server",
+      "tier": "Production alternative to benchmark",
+      "memory": "Select the accelerator and topology with the OEM",
+      "fit": "Compare supported full-model configurations on identical tool-calling, context, concurrency, failure-mode and ownership requirements.",
+      "caution": "No unverified accelerator count, price or performance claim is made here. Do not mix CUDA and ROCm GPUs inside one replica without explicit supported engineering.",
+      "ref": "parallel"
+    }
+  ],
+  "catalog": [
+    [
+      "Tenant provisioning",
+      "Approved catalog request",
+      "Allocate bounded resources from signed templates",
+      "Non-catalog scope, quota override or destructive replacement",
+      "VM health, isolation, identity, monitoring, backup and published endpoint"
+    ],
+    [
+      "VM lifecycle",
+      "Health event or planned request",
+      "Read state and perform narrowly pre-approved restart",
+      "Production deletion, critical restart, disks or data changes",
+      "Observed task state, guest health and dependent-service checks"
+    ],
+    [
+      "Capacity optimization",
+      "Forecast or resource-pressure threshold",
+      "Recommend changes and adjust within approved safe bounds",
+      "Quota increases, database/storage resizing or broad placement changes",
+      "Reservations, utilization, SLO and remaining failure capacity"
+    ],
+    [
+      "Network and DNS",
+      "Approved deployment or isolation event",
+      "Apply template rules within assigned tenant scope",
+      "Shared edge, routing, cross-tenant or broad firewall changes",
+      "Connectivity, denied paths, DNS and certificate validation"
+    ],
+    [
+      "IAM and certificates",
+      "Joiner/mover/leaver or certificate expiry",
+      "Scoped lifecycle and renewal under existing policy",
+      "Privileged role, trust root or authentication-policy changes",
+      "Authentication tests, access revocation and renewed-chain checks"
+    ],
+    [
+      "Patch and configuration",
+      "Signed baseline drift or maintenance window",
+      "Inventory, planning, test rollout and approved low-risk correction",
+      "Hypervisor/firmware updates and critical production maintenance",
+      "Compatibility, evacuation, service health and tested recovery"
+    ],
+    [
+      "Security response",
+      "Corroborated security alert",
+      "Evidence collection and explicitly pre-approved narrow containment",
+      "Broad isolation, critical systems, major revocation or destructive cleanup",
+      "Independent containment checks, service impact and evidence integrity"
+    ],
+    [
+      "Backup and recovery",
+      "Schedule, failed job or recovery request",
+      "Run schedules, inspect results and test isolated restores",
+      "Production restoration, retention changes and disaster declaration",
+      "Application consistency and measured RPO/RTO"
+    ],
+    [
+      "Compliance evidence",
+      "Scheduled control review",
+      "Collect access, change and recovery evidence with minimization",
+      "Legal conclusions, retention exceptions or regulator communications",
+      "Completeness, provenance, access restrictions and review sign-off"
+    ],
+    [
+      "Cost and asset governance",
+      "Quota, usage or lifecycle threshold",
+      "Reconcile assigned resources, ownership and expiry",
+      "Purchases, contracts, license changes or resource deletion",
+      "Verified inventory, approved budget and utilization evidence"
+    ],
+    [
+      "Tenant offboarding",
+      "Authorized termination request",
+      "Prepare inventory, export and retention plan",
+      "Active-data deletion, legal exceptions and final release",
+      "No unexplained active resources; derived-data and backup exception register"
+    ],
+    [
+      "Hardware and facilities",
+      "BMC fault, temperature or power alert",
+      "Read sensors, diagnose, identify spares and create work orders",
+      "Power reset beyond allowlist; any electrical, cooling or physical work",
+      "Technician confirmation, sensor recovery and infrastructure health"
+    ],
+    [
+      "AI platform maintenance",
+      "Approved model, runtime or workflow change",
+      "Run tests and read-only shadow evaluation",
+      "Model promotion, new tool authority, policy or secret changes",
+      "Tool correctness, tenant isolation, denied unsafe actions and failure recovery"
+    ]
+  ],
+  "acceptance": [
+    "Kill the LLM endpoint: customer traffic and existing deterministic protection continue where their own dependencies remain healthy.",
+    "Lose policy, vault or authorization access: no new unauthorized mutation proceeds.",
+    "Crash an executor after vCenter accepts a task: the resumed workflow reconciles the operation ID rather than cloning twice.",
+    "Change a plan target after approval: the prior approval is rejected.",
+    "Inject hostile instructions into a ticket and runbook: the model cannot read secrets, change tenant scope or bypass the execution gateway.",
+    "Revoke a document ACL: its cached and indexed content is no longer returned to that caller.",
+    "Fail a full model replica, not only one process: measure surviving capacity and degraded task capability.",
+    "Lose primary vCenter and identity: an authorized operator can bootstrap recovery using independent access and tested credentials.",
+    "Restore a tenant application in isolation: validate database consistency, dependencies and a real synthetic transaction.",
+    "Restore a backup after tenant offboarding: apply deletion tombstones before exposing data.",
+    "Block internet egress: model loading, retrieval, workflows, logging and recovery still work from approved local artifacts.",
+    "Lose the remote audit destination during a side effect: preserve durable local evidence and stop further mutations."
+  ]
+}

@@ -1,0 +1,48 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    BROKER["Approved infrastructure execution worker<br/>Tenant-scoped service identity"]:::control
+    subgraph CONTROL["VMware management services"]
+      VC["vCenter API and task service<br/>Inventory / lifecycle / events"]:::infrastructure
+      LIB["Approved template library<br/>Versioned hardened VM images"]:::store
+      NET["Network controller<br/>NSX where selected and licensed<br/>or VLAN-backed port groups + firewall"]:::control
+      IPAM["IPAM / DNS / DHCP<br/>Authoritative allocation inventory"]:::store
+      BACK["Backup controller<br/>Policy assignment + restore tests"]:::control
+    end
+    subgraph CLUSTER["ESXi workload cluster"]
+      HOSTS["ESXi 01–04<br/>Capacity reservations + HA admission"]:::infrastructure
+      VSW["Virtual switches / port groups<br/>Allowed uplinks + segment bindings"]:::infrastructure
+      STORE["Datastores<br/>Tenant VM disks + encryption policy"]:::store
+      subgraph A["Tenant A resource scope"]
+        AP["Folder + resource pool<br/>Roles + CPU/RAM quotas"]:::control
+        AW["Web VMs or ingress"]:::infrastructure
+        AA["Application VMs or Kubernetes"]:::infrastructure
+        AD["Database VMs<br/>Restricted data tier"]:::store
+      end
+      subgraph B["Tenant B resource scope"]
+        BP["Separate roles and quotas"]:::control
+        BW["Isolated application estate<br/>Own networks + storage permissions"]:::infrastructure
+      end
+    end
+    CMDB["CMDB / deployment state<br/>Tenant + owner + expiry + dependencies"]:::store
+    BROKER -->|HTTPS 443| VC
+    BROKER --> NET & IPAM & BACK
+    VC -->|clone from approved image| LIB
+    VC -->|asynchronous tasks; poll completion| HOSTS
+    HOSTS --> VSW & STORE
+    HOSTS --> AP & BP
+    AP --> AW -->|allow web-to-app only| AA -->|allow app-to-db only| AD
+    BP --> BW
+    NET -->|segment and firewall policy| VSW
+    IPAM -->|reserved addresses and records| AW & BW
+    BACK -->|protection policy| STORE
+    VC -->|inventory and task results| CMDB
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

@@ -1,0 +1,39 @@
+---
+config:
+  theme: dark
+---
+sequenceDiagram
+    autonumber
+    participant W as Workflow service
+    participant C as Context broker
+    participant A as Authorization service
+    participant R as Local retrieval stores
+    participant L as Read-only live APIs
+    participant M as Local LLM gateway
+    participant V as Plan validator
+    W->>C: Task ID + authenticated tenant + target IDs
+    C->>A: Authorize source scopes and target visibility
+    alt Missing scope or inaccessible target
+        A-->>C: Deny
+        C-->>W: Stop and record authorization failure
+    else Authorized
+        A-->>C: Allowed sources and predicates
+        par Retrieve approved operational knowledge
+            C->>R: Hybrid search with tenant + ACL predicates
+            R-->>C: Candidate chunks + source IDs + versions
+        and Fetch current infrastructure facts
+            C->>L: Bounded queries for authorized targets
+            L-->>C: State, timestamps and API provenance
+        end
+        C->>A: Recheck candidate permissions and revocations
+        A-->>C: Accepted evidence IDs
+        C->>C: Redact secrets, discard stale or conflicting facts
+        C->>M: Delimited evidence + typed planning task + no credentials
+        M-->>C: Proposed actions + evidence references + uncertainties
+        C->>V: Plan JSON + authorized target set + evidence timestamps
+        alt Valid plan and fresh evidence
+            V-->>W: Candidate plan for policy evaluation
+        else Invalid, unsupported or stale
+            V-->>W: Reject or request bounded refresh, never execute
+        end
+    end

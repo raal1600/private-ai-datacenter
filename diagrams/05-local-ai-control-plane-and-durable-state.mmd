@@ -1,0 +1,49 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    EVENTS["Metrics / SIEM alerts / vCenter events<br/>Scheduled jobs / tenant requests"]:::infrastructure
+    NORMAL["Intake gateway<br/>Authenticate source / redact / tenant tag"]:::control
+    QUEUE["Durable event queue<br/>Deduplicate / priority / backpressure"]:::store
+    WF["Durable workflow service<br/>Example: self-hosted Temporal"]:::control
+    subgraph WORKERS["Scoped agent worker pool"]
+      PROV["Provisioning and capacity worker"]:::ai
+      SEC["Security and incident worker"]:::ai
+      PATCH["Patch and configuration worker"]:::ai
+      DR["Backup and recovery worker"]:::ai
+    end
+    CONTEXT["Context broker<br/>Tenant ACLs + live API reads + RAG"]:::control
+    MODEL["Local model gateway<br/>Approved models / timeouts / quotas"]:::ai
+    PLAN["Typed plan contract<br/>Actions + preconditions + rollback + evidence"]:::ai
+    POLICY["Deterministic policy decision<br/>OPA or equivalent + signed rules"]:::control
+    APPROVAL["Approval service<br/>Authorized humans for restricted changes"]:::human
+    EXEC["Execution workers<br/>Scoped capabilities; no free-form root shell"]:::control
+    VERIFY["Independent verification workers<br/>Actual state + SLO + security checks"]:::control
+    subgraph STATE["Local persistence — separate access roles"]
+      DB["Workflow database<br/>Checkpoints / leases / idempotency keys"]:::store
+      AUDIT["Append-only audit evidence<br/>Plan hash / approvals / tool receipts"]:::store
+      CATALOG["Signed workflow catalog<br/>Versioned tools + policy bundles"]:::store
+    end
+    WATCH["Independent health monitor<br/>Page humans; no LLM dependency"]:::control
+    EVENTS --> NORMAL --> QUEUE --> WF
+    WF --> PROV & SEC & PATCH & DR
+    PROV & SEC & PATCH & DR --> CONTEXT
+    CONTEXT --> MODEL
+    MODEL --> PLAN --> POLICY
+    POLICY -->|pre-approved action| EXEC
+    POLICY -->|approval required| APPROVAL --> EXEC
+    EXEC --> VERIFY -->|verified result or bounded recovery| WF
+    WF <--> DB
+    CATALOG --> WF & POLICY & EXEC
+    WF --> AUDIT
+    EXEC --> AUDIT
+    VERIFY --> AUDIT
+    WATCH -.-> WF & MODEL & DB
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

@@ -1,0 +1,50 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    EVENT["Authenticated event or approved request"]:::infrastructure
+    DEDUP["Deduplicate by event or request key<br/>Create durable workflow record"]:::control
+    OBSERVE["Read actual state<br/>Capture timestamps and target versions"]:::infrastructure
+    PLAN["Build typed plan<br/>Version + hash + preconditions + compensation"]:::ai
+    CHECK{"Policy permits<br/>this exact plan?"}:::control
+    REJECT["Rejected<br/>Record reason; no side effect"]:::stop
+    WAIT["Await authorized approval<br/>Bound to plan hash; expires"]:::human
+    LEASE["Acquire scoped capability and target lease<br/>Persist audit intent"]:::control
+    PRE{"Still authorized, fresh<br/>and inside impact limits?"}:::control
+    EXEC["Execute one recorded activity<br/>Idempotency key + external task ID"]:::infrastructure
+    RESULT{"Known result?"}:::control
+    RECON["Reconcile actual state<br/>Query operation ID; do not retry blindly"]:::control
+    VERIFY["Independent postcondition and SLO checks"]:::control
+    PASS{"Expected outcome<br/>verified?"}:::control
+    COMMIT["Commit receipt and observed state<br/>Release lease; mark completed"]:::store
+    COMP["Approved bounded compensation<br/>Only when safe and applicable"]:::control
+    HUMAN["Suspended for human recovery<br/>Preserve partial state and evidence"]:::human
+    RETRY["Bounded retry or replan<br/>Changed plan invalidates old approval"]:::control
+    EVENT --> DEDUP --> OBSERVE --> PLAN --> CHECK
+    CHECK -->|deny| REJECT
+    CHECK -->|approval required| WAIT
+    WAIT -->|approved and unexpired| LEASE
+    WAIT -->|expired or rejected| REJECT
+    CHECK -->|pre-authorized bounded task| LEASE
+    LEASE --> PRE
+    PRE -->|yes| EXEC --> RESULT
+    PRE -->|no| RETRY
+    RESULT -->|unknown or timeout| RECON
+    RECON -->|observed completion| VERIFY
+    RECON -->|safe confirmed no-op| RETRY
+    RECON -->|ambiguous state| HUMAN
+    RESULT -->|completed| VERIFY --> PASS
+    RESULT -->|known failure| COMP
+    PASS -->|yes| COMMIT
+    PASS -->|no| COMP
+    COMP -->|verified recovery| HUMAN
+    COMP -->|unsafe or unavailable| HUMAN
+    RETRY --> OBSERVE
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

@@ -1,0 +1,36 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    VENDOR["External vendor packages / models<br/>Signed releases where available"]:::human
+    IMPORT["Controlled import station<br/>No customer-data browsing session"]:::control
+    SCAN["Quarantine checks<br/>Hashes / signatures / malware / licenses"]:::control
+    GIT["Local source control<br/>Tools / runbooks / policy / IaC"]:::store
+    BUILD["Isolated build workers<br/>Pinned dependencies + reproducible manifest"]:::infrastructure
+    ART["Candidate artifact registry<br/>Digest / provenance / SBOM where applicable"]:::store
+    LAB["Representative test environment<br/>Synthetic or approved redacted datasets"]:::infrastructure
+    EVAL["E2E acceptance suite<br/>Tool correctness / isolation / recovery<br/>Prompt injection / load and failure tests"]:::control
+    REVIEW["Independent review and approval<br/>Model, policy and production roles separated"]:::human
+    SIGN["Signed release manifest<br/>Model + runtime + tools + policy versions"]:::control
+    REG["Local production registry<br/>Approved immutable artifact versions"]:::store
+    CANARY["Canary deployment<br/>Read-only shadow or limited scope"]:::ai
+    PROMOTE{"Acceptance gates<br/>remain satisfied?"}:::control
+    PROD["Production rollout<br/>Bounded scope and health monitoring"]:::infrastructure
+    ROLLBACK["Revert to approved prior version<br/>Migrations require tested compatibility"]:::stop
+    REJECT["Rejected / quarantined artifact<br/>No production promotion"]:::stop
+    VENDOR --> IMPORT --> SCAN
+    SCAN -->|accepted| ART
+    SCAN -->|failed| REJECT
+    GIT --> BUILD --> ART --> LAB --> EVAL --> REVIEW --> SIGN --> REG
+    REG --> CANARY --> PROMOTE
+    PROMOTE -->|yes| PROD
+    PROMOTE -->|no| ROLLBACK
+    PROD -->|health regression| ROLLBACK
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

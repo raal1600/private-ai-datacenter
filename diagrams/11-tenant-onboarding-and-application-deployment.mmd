@@ -1,0 +1,44 @@
+---
+config:
+  theme: dark
+---
+sequenceDiagram
+    autonumber
+    participant U as Tenant portal
+    participant W as Workflow service
+    participant P as Policy and approval
+    participant N as IAM / IPAM / network
+    participant V as VMware adapter
+    participant C as Guest configurator
+    participant B as Backup and monitor
+    participant E as Evidence and CMDB
+    U->>W: Request catalog item + tenant identity + resource profile
+    W->>W: Create operation ID, deduplicate, reserve quota
+    W->>P: Validate entitlement, budget, template and network scope
+    alt Denied or approval expired
+        P-->>W: Deny
+        W-->>U: Request rejected, no infrastructure mutation
+    else Authorized exact deployment plan
+        P-->>W: Signed plan authorization
+        W->>N: Reserve IP, create scoped network and service identities
+        N-->>W: Allocation IDs and policy version
+        W->>V: Clone approved template, attach network, apply limits
+        V-->>W: Task ID
+        W->>V: Poll task and confirm VM inventory state
+        V-->>W: VM IDs and observed state
+        W->>C: Apply approved configuration with short-lived identity
+        C-->>W: Configuration receipt and health endpoint
+        W->>B: Attach backup policy, install monitoring, run checks
+        B-->>W: Protection status and service/security checks
+        alt All required checks pass
+            W->>N: Publish DNS and approved ingress rule
+            W->>E: Commit owner, assets, dependencies and audit receipts
+            W-->>U: Ready: endpoint + access instructions
+        else Deployment or verification fails
+            W->>N: Block unpublished ingress, retain safe isolation
+            W->>V: Compensate only newly created assets if safe
+            W->>N: Release unused reservations or mark for review
+            W->>E: Record partial state and human follow-up
+            W-->>U: Failed safely, no false ready status
+        end
+    end

@@ -1,0 +1,40 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    DETECT["Independent service health monitor<br/>Runs without the LLM"]:::control
+    TYPE{"Failure category"}:::control
+    GPU["Inference unavailable"]:::stop
+    POLICY["Policy / vault / approval unavailable"]:::stop
+    DB["Workflow state or audit unavailable"]:::stop
+    VC["vCenter / management network unavailable"]:::stop
+    GPUACT["Queue reasoning tasks<br/>Use validated local fallback only<br/>Continue pre-authorized deterministic jobs"]:::control
+    POLACT["Deny new mutations<br/>Let existing protection controls continue"]:::control
+    DBACT["Stop new side effects<br/>Persist any in-flight receipt locally<br/>Reconcile after recovery"]:::control
+    VCACT["Suspend dependent changes<br/>Confirm guest service health separately"]:::control
+    DATA["Customer applications + existing firewall rules<br/>Native HA and backup schedules continue<br/>when their own dependencies are healthy"]:::infrastructure
+    HUMAN["Authorized on-call operator<br/>MFA or controlled offline break-glass"]:::human
+    OOB["Independent recovery bastion<br/>OOB network / BMC / direct console"]:::control
+    REC["Restore dependencies in order<br/>Network / identity / storage / management"]:::infrastructure
+    RECON["Reconcile actual and recorded state<br/>Invalidate stale leases and approvals"]:::control
+    RETURN["Human-authorized return to automation<br/>Canary workflows and health checks"]:::control
+    KILL["Independent automation kill switch<br/>Disable new capabilities + block broker egress"]:::control
+    DETECT --> TYPE
+    TYPE --> GPU & POLICY & DB & VC
+    GPU --> GPUACT
+    POLICY --> POLACT
+    DB --> DBACT
+    VC --> VCACT
+    GPUACT & POLACT & DBACT & VCACT --> HUMAN
+    GPUACT & POLACT & DBACT & VCACT -.-> DATA
+    HUMAN --> OOB --> REC --> RECON --> RETURN
+    HUMAN --> KILL
+    KILL -.-> POLACT
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

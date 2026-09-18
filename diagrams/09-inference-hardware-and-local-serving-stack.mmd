@@ -1,0 +1,47 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    CPU["Management CPU cluster<br/>Agent workers / workflow / policy / state"]:::control
+    GW["Local inference gateway pair<br/>mTLS / tenant quotas / request limits"]:::ai
+    HEALTH["Local health and capacity monitor<br/>Queue delay / TTFT / throughput / OOM"]:::control
+    REG["Approved local model registry<br/>Checkpoint + quantization + image digest"]:::store
+    subgraph A["Production replica A"]
+      APIA["Model-serving process<br/>Validated vLLM / SGLang / vendor runtime"]:::ai
+      RAMA["CPU RAM<br/>Runtime / optional validated offload"]:::infrastructure
+      NVMEA["Local NVMe<br/>Weights staging / logs with retention"]:::store
+      GPUA["GPU group: resident model shards<br/>Weights + KV cache + runtime buffers"]:::ai
+      IA["Intra-node GPU interconnect<br/>Vendor-specific topology"]:::infrastructure
+      BMCA["BMC + dual power + data NICs<br/>Supported OEM chassis"]:::infrastructure
+    end
+    subgraph B["Production replica B"]
+      APIB["Second complete model endpoint<br/>or explicitly reduced fallback model"]:::ai
+      GPUB["Independent GPU group<br/>Enough memory for its assigned model"]:::ai
+      NVMEB["Local NVMe model copy"]:::store
+    end
+    subgraph DEV["Isolated development zone"]
+      SPARK["NVIDIA DGX Spark<br/>128 GB unified memory<br/>ARM / CUDA development path"]:::infrastructure
+      HALO["AMD Ryzen AI Halo<br/>128 GB unified memory<br/>AMD local-development path"]:::infrastructure
+      EVAL["Workflow and model evaluation<br/>Synthetic or approved test data"]:::control
+    end
+    CPU -->|inference calls only| GW
+    GW -->|healthy endpoint; admission control| APIA & APIB
+    REG -->|verified artifact copy| NVMEA
+    REG -->|approved checkpoint| APIB
+    NVMEA --> APIA
+    RAMA --- APIA
+    APIA --> GPUA
+    GPUA --- IA
+    NVMEB --> APIB --> GPUB
+    BMCA -.->|hardware health| HEALTH
+    HEALTH -.-> GW & APIA & APIB
+    SPARK & HALO --> EVAL
+    EVAL -->|reviewed promotion request| REG
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

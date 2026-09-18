@@ -1,0 +1,56 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    subgraph POWER["Power and facilities"]
+      PA["Power path A<br/>UPS A + rack PDU A"]:::infrastructure
+      PB["Power path B<br/>UPS B + rack PDU B"]:::infrastructure
+      COOL["Cooling / temperature / leak sensors<br/>Independent safety controllers"]:::infrastructure
+    end
+    subgraph FABRIC["Redundant network paths"]
+      NA["Production switch fabric A<br/>ToR / core as estate size requires"]:::infrastructure
+      NB["Production switch fabric B<br/>Separate failure path"]:::infrastructure
+      OOB["Dedicated out-of-band switch<br/>Isolated BMC management network"]:::control
+    end
+    subgraph CPU["Independent management CPU cluster"]
+      M1["Management CPU node 1<br/>ECC RAM + mirrored boot"]:::infrastructure
+      M2["Management CPU node 2<br/>ECC RAM + mirrored boot"]:::infrastructure
+      M3["Management CPU node 3<br/>ECC RAM + mirrored boot"]:::infrastructure
+      CP["Workflow / policy / IAM / vault / state<br/>CPU service cluster; local disk replicas"]:::control
+    end
+    subgraph VM["VMware workload hardware"]
+      E12["ESXi 01 and ESXi 02<br/>Dual PSUs + dual network paths"]:::infrastructure
+      E34["ESXi 03 and ESXi 04<br/>Dual PSUs + dual network paths"]:::infrastructure
+      SAN["Shared storage system<br/>Dual controllers + protected disks"]:::store
+    end
+    subgraph GPU["Dedicated bare-metal inference servers"]
+      GA["Inference replica A<br/>GPU / CPU RAM / local NVMe / BMC"]:::ai
+      GB["Inference replica B or approved fallback<br/>Independent of A where required"]:::ai
+    end
+    subgraph REC["Recovery and physical operations"]
+      JUMP["Recovery bastion + local console<br/>Break-glass credentials kept offline"]:::control
+      BMC["Host BMCs<br/>Redfish / remote console via broker"]:::control
+      BACK["Isolated backup appliance<br/>Protected retention; separate admin"]:::store
+      TECH["Authorized technician<br/>Replace disks / cables / PSUs"]:::human
+      TICKET["Facilities or hardware incident<br/>Evidence + location + spare part"]:::control
+    end
+    PA -.-> M1 & M2 & M3 & E12 & E34 & SAN & GA & GB
+    PB -.-> M1 & M2 & M3 & E12 & E34 & SAN & GA & GB
+    NA --- CPU & VM & GPU
+    NB --- CPU & VM & GPU
+    M1 & M2 & M3 --> CP
+    E12 & E34 --> SAN
+    JUMP --> OOB --> BMC
+    BMC -.-> CPU & VM & GPU
+    VM --> BACK
+    CP --> BACK
+    COOL -->|sensor telemetry only| TICKET
+    BMC -->|hardware health| TICKET --> TECH
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

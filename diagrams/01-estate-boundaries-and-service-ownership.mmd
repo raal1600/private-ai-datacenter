@@ -1,0 +1,58 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    USERS["Customers and application users"]:::human
+    OPS["Authorized operators and auditors"]:::human
+    EXT["Approved software and model suppliers"]:::human
+    subgraph PRIVATE["Customer-controlled runtime"]
+      subgraph EDGE["Service access and identity"]
+        WAF["Public service edge<br/>Firewall / WAF / ingress"]:::infrastructure
+        ACCESS["Private operator access<br/>VPN + MFA + privileged workstation"]:::control
+        PORTAL["Tenant self-service portal<br/>Catalog / quotas / approved requests"]:::infrastructure
+        IAM["Local identity provider<br/>Tenant identity + operator roles"]:::control
+      end
+      subgraph TENANT["Tenant data plane — private virtual networks"]
+        WORK["VMs / containers / applications<br/>Per-tenant isolation"]:::infrastructure
+        DATA["Customer databases and storage<br/>Tenant-scoped access"]:::store
+      end
+      subgraph MGMT["Management plane — independent CPU cluster"]
+        EVENT["Telemetry and event intake<br/>Redaction + tenant attribution"]:::infrastructure
+        PLAN["Agent planning workers<br/>No infrastructure credentials"]:::ai
+        WF["Durable workflow service<br/>Policy / approvals / execution broker"]:::control
+        API["Infrastructure control endpoints<br/>vCenter / network / backup / IAM"]:::infrastructure
+        STATE["Workflow state + CMDB + audit<br/>Versioned desired state"]:::store
+      end
+      subgraph AI["Local inference and retrieval"]
+        GATE["Local model gateway<br/>Authenticated requests + quotas"]:::ai
+        MODELS["Approved local LLM replicas<br/>Embeddings and reranker"]:::ai
+        KNOW["Tenant-filtered knowledge service<br/>Documents are not executable policy"]:::store
+      end
+      IMPORT["Quarantined import station<br/>Scan / verify / human promotion"]:::control
+      MIRROR["Local model and package registry<br/>Pinned digests + offline artifacts"]:::store
+      RECOVERY["Independent recovery access<br/>Break-glass identity + offline backups"]:::control
+    end
+    USERS --> WAF --> WORK --> DATA
+    USERS --> PORTAL
+    OPS --> ACCESS --> PORTAL
+    PORTAL --> IAM
+    PORTAL -->|approved service request| WF
+    WORK -->|events and health| EVENT --> PLAN
+    PLAN -->|read authorized evidence| KNOW
+    PLAN -->|inference only| GATE --> MODELS
+    PLAN -->|typed proposed plan| WF
+    WF -->|scoped API operations| API
+    API -->|reconcile approved changes| WORK
+    WF --> STATE
+    EXT -->|one-way controlled promotion process| IMPORT --> MIRROR
+    MIRROR --> MODELS
+    RECOVERY -.-> ACCESS
+    RECOVERY -.-> API
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

@@ -1,0 +1,42 @@
+---
+config:
+  theme: dark
+---
+flowchart TB
+    subgraph SOURCES["Local source systems"]
+      DOCS["Approved runbooks and architecture docs"]:::store
+      TICKETS["ITSM tickets and change records"]:::store
+      INVENTORY["CMDB and asset relationships"]:::store
+      MANUAL["Imported vendor manuals<br/>Reviewed version and provenance"]:::store
+    end
+    READ["Read-only source connectors<br/>Service identity per source"]:::control
+    MANIFEST["Source manifest<br/>Tenant / ACL / owner / version / expiry"]:::store
+    SCAN["Content checks<br/>Malware / secrets / PII minimization"]:::control
+    PARSE["Sandboxed parsing and chunking<br/>Documents treated as untrusted data"]:::control
+    EMBED["Local embedding service<br/>Pinned model and embedding version"]:::ai
+    subgraph INDEX["Local retrieval stores"]
+      OBJ["Encrypted source/chunk store<br/>Document-to-chunk lineage"]:::store
+      VECTOR["Vector index<br/>Tenant + ACL filterable metadata"]:::store
+      TEXT["Lexical index<br/>Keyword and exact-identifier search"]:::store
+    end
+    LIVE["Live metrics / logs / SIEM / vCenter<br/>Queried through read-only APIs"]:::infrastructure
+    CONTEXT["Context broker<br/>Permission checks at query time"]:::control
+    CHANGE["Source changed / access revoked / erased"]:::control
+    RECON["Index reconciliation job<br/>Delete stale chunks and invalidate caches"]:::control
+    QUAR["Quarantine for human review<br/>Not visible to retrieval"]:::stop
+    DOCS & TICKETS & INVENTORY & MANUAL --> READ --> MANIFEST --> SCAN
+    SCAN -->|approved| PARSE --> EMBED --> VECTOR
+    SCAN -->|failed checks| QUAR
+    PARSE --> OBJ & TEXT
+    VECTOR & OBJ & TEXT --> CONTEXT
+    LIVE -->|bounded live queries; not bulk embedding| CONTEXT
+    CHANGE --> RECON
+    RECON -->|remove or update| OBJ & VECTOR & TEXT
+    RECON -->|invalidate cached evidence| CONTEXT
+
+classDef ai fill:#19362f,stroke:#63ab96,color:#bde7dc,stroke-width:1.5px;
+classDef control fill:#322c20,stroke:#b39766,color:#ebd1a5,stroke-width:1.5px;
+classDef infrastructure fill:#1c2c43,stroke:#6d91bd,color:#d0e0f5,stroke-width:1.3px;
+classDef store fill:#2b273b,stroke:#a191c0,color:#dbd1f1,stroke-width:1.3px;
+classDef human fill:#26303d,stroke:#91a1b6,color:#d1dae5,stroke-width:1.3px;
+classDef stop fill:#3b252c,stroke:#c18790,color:#efc2c7,stroke-width:1.5px;

@@ -1,0 +1,225 @@
+{
+  "viewer": "Standalone offline HTML, pre-rendered Mermaid SVG",
+  "date": "2026-09-18",
+  "browser": "Chromium via Playwright; in-memory page due managed navigation policy",
+  "notes": "Native OS clipboard/fullscreen/download permissions vary by browser; export payloads checked. No live infrastructure tests were run.",
+  "tests": [
+    {
+      "test": "Initial render",
+      "pass": true
+    },
+    {
+      "test": "View 01: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 01: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 02: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 02: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 03: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 03: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 04: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 04: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 05: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 05: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 06: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 06: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 07: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 07: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 08: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 08: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 09: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 09: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 10: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 10: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 11: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 11: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 12: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 12: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 13: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 13: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 14: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 14: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 15: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 15: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 16: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 16: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 17: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 17: design notes",
+      "pass": true
+    },
+    {
+      "test": "View 18: SVG and Mermaid source",
+      "pass": true
+    },
+    {
+      "test": "View 18: design notes",
+      "pass": true
+    },
+    {
+      "test": "Read-size zoom",
+      "pass": true
+    },
+    {
+      "test": "Zoom in",
+      "pass": true
+    },
+    {
+      "test": "Node selection inspector",
+      "pass": true,
+      "text": "Selected component: Management CPU clusterAgent workers / workflow / policy / state \u00b7 Review the Design notes tab for th"
+    },
+    {
+      "test": "Default sizing arithmetic",
+      "pass": true
+    },
+    {
+      "test": "16-bit sizing arithmetic",
+      "pass": true
+    },
+    {
+      "test": "Invalid input guard",
+      "pass": true
+    },
+    {
+      "test": "Automation catalog rows",
+      "pass": true
+    },
+    {
+      "test": "Primary references",
+      "pass": true
+    },
+    {
+      "test": "Navigation search",
+      "pass": true
+    },
+    {
+      "test": "Mermaid and SVG export payloads",
+      "pass": true,
+      "exports": [
+        {
+          "name": "10-model-sharding-versus-service-redundancy.mmd",
+          "length": 2094,
+          "type": null
+        },
+        {
+          "name": "10-model-sharding-versus-service-redundancy.svg",
+          "length": 40896,
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "test": "Mobile layout width",
+      "pass": true
+    },
+    {
+      "test": "No runtime network requests",
+      "pass": true,
+      "requests": []
+    },
+    {
+      "test": "No JavaScript page errors",
+      "pass": true,
+      "errors": []
+    }
+  ],
+  "passed": 50,
+  "total": 50
+}

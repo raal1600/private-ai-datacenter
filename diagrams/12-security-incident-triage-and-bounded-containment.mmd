@@ -1,0 +1,41 @@
+---
+config:
+  theme: dark
+---
+sequenceDiagram
+    autonumber
+    participant S as SIEM / detection
+    participant W as Incident workflow
+    participant A as Local analyst agent
+    participant P as Policy and approval
+    participant H as Human on-call
+    participant X as Execution gateway
+    participant V as Independent verifier
+    participant E as Evidence store
+    S->>W: Signed alert + target + time + severity
+    W->>W: Deduplicate, create incident, lock conflicting changes
+    W->>E: Preserve alert and references under retention policy
+    W->>A: Authorized evidence and live target health
+    A-->>W: Hypothesis + uncertainty + proposed bounded action
+    W->>P: Exact target, dependencies, rollback and impact limit
+    alt Pre-approved narrow containment
+        P-->>W: Short-lived capability for one defined action
+    else Restricted action or uncertain dependency
+        P->>H: Evidence + impact + proposed action
+        H-->>P: Approve exact plan or reject
+        P-->>W: Signed decision, timeout means no broad mutation
+    end
+    alt Valid containment authorization
+        W->>X: Execute scoped isolation or credential revocation
+        X-->>W: Operation receipt and before/after state
+        W->>V: Verify containment and dependency health
+        V-->>W: Confirmed outcome or unexpected impact
+        W->>E: Store decision, tool receipts and verification
+        alt Unexpected service impact
+            W->>H: Escalate, request controlled compensation
+        else Containment verified
+            W->>H: Incident brief and recovery proposal
+        end
+    else Not authorized
+        W->>H: Page and preserve evidence, no unapproved action
+    end

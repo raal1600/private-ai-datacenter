@@ -1,0 +1,38 @@
+---
+config:
+  theme: dark
+---
+sequenceDiagram
+    autonumber
+    participant O as Authorized tenant owner
+    participant W as Lifecycle workflow
+    participant P as Policy and legal retention
+    participant I as IAM / network
+    participant V as VMware / storage
+    participant R as RAG / caches / traces
+    participant B as Backup retention service
+    participant E as Independent evidence verifier
+    O->>W: Signed offboarding request + tenant scope
+    W->>P: Verify authority, contractual export and retention rules
+    P-->>W: Exact deletion plan + exceptions + approval expiry
+    W->>W: Freeze new deployments and conflicting automation
+    W->>I: Revoke tenant sessions, API keys and service access
+    I-->>W: Revocation receipts
+    W->>V: Perform authorized export and confirm acceptance where required
+    V-->>W: Export receipt and asset inventory
+    W->>V: Remove approved active workloads and data
+    V-->>W: Operation IDs and deletion status
+    W->>R: Delete authorized chunks, embeddings, caches and trace content
+    R-->>W: Source-lineage reconciliation result
+    W->>B: Record deletion tombstone and applicable backup expiry
+    B-->>W: Protected-copy expiry schedule and legal-hold exceptions
+    W->>I: Remove DNS, ingress, network allocation and tenant identities
+    I-->>W: Verified resource release
+    W->>E: Cross-check inventory, access and all derived data stores
+    alt No unexplained remaining active resources
+        E-->>W: Verified completion with documented retention exceptions
+        W-->>O: Offboarding record and remaining retention schedule
+    else Residual resource or unexplained copy
+        E-->>W: Hold closure, investigate and remediate
+        W-->>O: Partial completion with tracked outstanding items
+    end

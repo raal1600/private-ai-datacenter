@@ -32,7 +32,18 @@ jobs:
               assert hashlib.sha256(packed).hexdigest()==m['sha256'], 'Import checksum mismatch'
               with tarfile.open(fileobj=io.BytesIO(packed),mode='r:xz') as archive:
                   archive.extractall('.',filter='data')
+              # Clamp archived 1970 timestamps to ZIP's supported date range.
+              build=Path('scripts/build.py')
+              old="zipfile.ZipFile(site/'private-ai-datacenter-offline.zip','w',zipfile.ZIP_DEFLATED)"
+              new="zipfile.ZipFile(site/'private-ai-datacenter-offline.zip','w',zipfile.ZIP_DEFLATED,strict_timestamps=False)"
+              assert old in build.read_text(), 'Expected initial build source'
+              build.write_text(build.read_text().replace(old,new))
+              package=Path('package.json')
+              dependencies=json.loads(package.read_text())
+              dependencies['devDependencies']['@mermaid-js/mermaid-cli']='11.16.0'
+              package.write_text(json.dumps(dependencies,indent=2)+'\n')
               Path('docs').mkdir(exist_ok=True)
+              m['import_corrections']=['ZIP timestamp compatibility','Mermaid CLI 11.16.0']
               Path('docs/import-manifest.json').write_text(json.dumps(m,indent=2)+'\n')
               shutil.rmtree(root)
           PY
@@ -42,6 +53,7 @@ jobs:
       - name: Install pinned build dependencies
         run: |
           if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+          npm audit --json > docs/dependency-audit.json || test -s docs/dependency-audit.json
           python -m pip install playwright==1.58.0
           python -m playwright install --with-deps chromium
       - name: Render all Mermaid diagrams
@@ -66,6 +78,15 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+      - name: Save validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-validation
+          path: |
+            docs/validation-*.json
+            docs/dependency-audit.json
+            docs/preview-*.png
   deploy:
     name: Publish GitHub Pages
     needs: build

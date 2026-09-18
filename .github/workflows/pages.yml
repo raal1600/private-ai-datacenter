@@ -15,45 +15,21 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: write
+    outputs:
+      site_sha256: ${{ steps.digest.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Import initial source package, if present
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import hashlib,io,json,tarfile,shutil
-          root=Path('.bootstrap')
-          if root.exists():
-              m=json.loads((root/'manifest.json').read_text())
-              packed=b''.join((root/p).read_bytes() for p in m['parts'])
-              assert hashlib.sha256(packed).hexdigest()==m['sha256'], 'Import checksum mismatch'
-              with tarfile.open(fileobj=io.BytesIO(packed),mode='r:xz') as archive:
-                  archive.extractall('.',filter='data')
-              # Clamp archived 1970 timestamps to ZIP's supported date range.
-              build=Path('scripts/build.py')
-              old="zipfile.ZipFile(site/'private-ai-datacenter-offline.zip','w',zipfile.ZIP_DEFLATED)"
-              new="zipfile.ZipFile(site/'private-ai-datacenter-offline.zip','w',zipfile.ZIP_DEFLATED,strict_timestamps=False)"
-              assert old in build.read_text(), 'Expected initial build source'
-              build.write_text(build.read_text().replace(old,new))
-              package=Path('package.json')
-              dependencies=json.loads(package.read_text())
-              dependencies['devDependencies']['@mermaid-js/mermaid-cli']='11.16.0'
-              package.write_text(json.dumps(dependencies,indent=2)+'\n')
-              Path('docs').mkdir(exist_ok=True)
-              m['import_corrections']=['ZIP timestamp compatibility','Mermaid CLI 11.16.0']
-              Path('docs/import-manifest.json').write_text(json.dumps(m,indent=2)+'\n')
-              shutil.rmtree(root)
-          PY
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned build dependencies
+      - name: Install locked build dependencies
         run: |
-          if [ -f package-lock.json ]; then npm ci --ignore-scripts; else npm install --ignore-scripts; fi
+          npm ci --ignore-scripts
           npm audit --json > docs/dependency-audit.json || test -s docs/dependency-audit.json
+          npm audit --audit-level=high
           python -m pip install playwright==1.58.0
           python -m playwright install --with-deps chromium
       - name: Render all Mermaid diagrams
@@ -66,7 +42,10 @@ jobs:
           npm test
           npm run test:browser
           npm run build
-      - name: Commit refreshed source and generated assets
+      - name: Record tested build digest
+        id: digest
+        run: echo "sha256=$(sha256sum _site/index.html | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+      - name: Commit refreshed generated assets
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -88,7 +67,7 @@ jobs:
             docs/dependency-audit.json
             docs/preview-*.png
   deploy:
-    name: Publish GitHub Pages
+    name: Publish and verify GitHub Pages
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -103,3 +82,33 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify the live site matches the tested artifact
+        env:
+          SITE_URL: ${{ steps.deployment.outputs.page_url }}
+          EXPECTED_SHA256: ${{ needs.build.outputs.site_sha256 }}
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,re,time,urllib.request
+          url=os.environ['SITE_URL']
+          expected=os.environ['EXPECTED_SHA256']
+          for attempt in range(18):
+              try:
+                  request=urllib.request.Request(url,headers={'Cache-Control':'no-cache','User-Agent':'ArchitectureDeploymentCheck'})
+                  with urllib.request.urlopen(request,timeout=20) as response:
+                      body=response.read()
+                      assert response.status==200, 'Expected HTTP 200'
+                  digest=hashlib.sha256(body).hexdigest()
+                  assert digest==expected, 'CDN still serves a previous build'
+                  text=body.decode('utf-8')
+                  match=re.search(r'<script[^>]*id="architecture-data"[^>]*>(.*?)</script>',text,re.S)
+                  assert match, 'Embedded architecture data missing'
+                  data=json.loads(match.group(1))
+                  assert len(data['diagrams'])==18, 'Expected all 18 views'
+                  assert 'color-scheme:dark' in text, 'Dark theme missing'
+                  print(json.dumps({'url':url,'http_status':200,'views':18,'bytes':len(body),'sha256':digest,'matches_tested_artifact':True},indent=2))
+                  break
+              except Exception as error:
+                  if attempt==17:raise
+                  print(f'Waiting for Pages propagation ({attempt+1}/18): {error}')
+                  time.sleep(10)
+          PY
